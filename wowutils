@@ -1,0 +1,191 @@
+#!/bin/bash
+#    WoWutils, WoW addon handler.
+#    Copyright (C) 2015  Kaan Genç
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>
+
+# Set the defaults
+WOW_DIR=
+URL_PREFIX="http://www.curse.com/addons/wow/"
+URL_SUFFIX="/download"
+DOWNLOAD_EXTRACT_REGEXP='(?<=data-href=")\S*(?=")'
+USER_AGENT=
+WGET_ARGS="--no-verbose"
+UNZIP_ARGS="-q -u -o"
+TAR_ARGS="-acf"
+TAR_SUFFIX="-wowutil-backup.tar.gz"
+SCRIPT_NAME=$(basename $0)
+
+# Load the configuration
+[[ -f "$HOME/.wowutils" ]] && . "$HOME/.wowutils"
+[[ -f "$HOME/.config/wowutils" ]] && . "$HOME/.config/wowutils"
+[[ -n "$XDG_CONFIG_HOME" && -f "$XDG_CONFIG_HOME/wowutils" ]] && . "$XDG_CONFIG_HOME/wowutils"
+[[ -n $USER_AGENT ]] && WGET_ARGS+=" --user-agent='$USER_AGENT'"
+WOW_ADDON_DIR="$WOW_DIR/Interface/Addons"
+WOW_CACHE_DIR="$WOW_DIR/Cache"
+WOW_WTF_DIR="$WOW_DIR/WTF"
+
+usage () {
+    cat <<EOF
+Command line updater for WoW addons, using Curse addons.
+
+Usage: $SCRIPT_NAME <command> [<addons>...]
+
+Commands:
+  download   Download the addons.
+  extract    Extract the given file into addons folder.
+  install    Download and install addons.
+  update     Update all installed addons.
+  list       List installed addons.
+  backup     Create a backup of all installed addons and addon settings.
+  restore    Restore a backup.
+  clean      Delete the WoW cache.
+  purge      Delete the WoW cache, all installed addons and addon settings.
+  config     Print an example configuration file.
+  help       Print this help.
+
+Configuration:
+  $SCRIPT_NAME can be configured via configuration files placed at:
+    * $XDG_CONFIG_HOME/wowutils
+    * $HOME/.config/wowutils
+    * $HOME/.wowutils
+  $SCRIPT_NAME will execute these files in the given order if they exist.
+  Please note that these files will be executed with bash.
+
+  You can get an example configutaion file by executing
+    # $SCRIPT_NAME config > ~/.wowutils
+
+  Only one variable in the configuration file is mandatory: WOW_DIR.
+  WOW_DIR must be set to the directory containing your WoW installation.
+  This is the folder that contains the Wow.exe.
+EOF
+}
+
+config () {
+    cat <<EOF
+# Path to your WoW install, the directory containing Wow.exe.
+WOW_DIR="/example/dir"
+# The page where the download link is located. The URL_PREFIX
+# and URL_SUFFIX will be concatenated with addon name between them.
+URL_PREFIX="http://www.curse.com/addons/wow/"
+URL_SUFFIX="/download"
+# The directory where WoW stores addons. Will be appended to WOW_DIR.
+# The pattern used to extract the download url from download page.
+DOWNLOAD_EXTRACT_REGEXP='(?<=data-href=")\S*(?=")'
+# User agent used while downloading the addons. Passed to wget with --user-agent.
+USER_AGENT=
+# Arguments for wget. By default, quietens wget output.
+WGET_ARGS="--no-verbose"
+# Arguments for unzip. By default, quietens unzip output,
+# and updates extracted files without prompt.
+UNZIP_ARGS="-q -u -o"
+# The file suffix used for backups.
+TAR_SUFFIX="-wowutil-backup.tar.gz"
+# Arguments for tar. By default, creates an archive, determining the compression from the file suffix."
+TAR_ARGS="-acf"
+EOF
+}
+
+check_wow_dir () {
+    [[ -d "$WOW_ADDON_DIR" && \
+    -d "$WOW_CACHE_DIR" && \
+    -d "$WOW_WTF_DIR" ]] && return 0
+    return 1
+}
+
+check () {
+    # Make sure the WoW directory is correct
+    if [[ -z "$WOW_DIR" ]]; then
+	echo "WOW_DIR is not set. See $SCRIPT_NAME help for details." >&2
+	exit 1
+    elif ! check_wow_dir ; then
+	echo "WOW_DIR does not point to a WoW installation. See $SCRIPT_NAME help for details." >&2
+	exit 1
+    fi
+}
+
+download () {
+    local NAME=$1
+    local URL=$URL_PREFIX$NAME$URL_SUFFIX
+    local TEMP_FILE=$(mktemp --tmpdir "$SCRIPT_NAME.$NAME.XXXXXXXXXX")
+    wget $WGET_ARGS -O - "$URL" | \
+	grep -Po "$DOWNLOAD_EXTRACT_REGEXP" | \
+	wget $WGET_ARGS -i - -O "$TEMP_FILE"
+    echo $TEMP_FILE
+}
+
+extract () {
+    local FILE_NAME=$1
+    unzip $UNZIP_ARGS -d "$WOW_ADDON_DIR" "$FILE_NAME"
+}
+
+install () {
+    local NAME=$1
+    local TEMP_FILE=$(download $NAME)
+    extract $TEMP_FILE
+}
+
+
+COMMAND=$1
+shift
+case $COMMAND in
+    "download")
+	while (( "$#" )); do
+	    download "$1"
+	    shift
+	done
+	;;	
+    "extract")
+	check
+	while (( "$#" )); do
+	    extract "$1"
+	    shift
+	done
+	;;
+    "update"|"install")
+	while (( "$#" )); do
+	    install "$1"
+	done
+	;;
+    "clean")
+	check
+	rm -rf "$WOW_CACHE_DIR"/*
+	;;
+    "purge")
+	check
+	echo "All addons and addon settings will be DELETED. Are you sure?"
+	select YN in "yes" "no"; do
+	    case $YN in
+		"yes")
+		    rm -rf "$WOW_CACHE_DIR"/*
+		    rm -rf "$WOW_ADDON_DIR"/*
+		    rm -rf "$WOW_WTF_DIR"/*
+		    exit 0
+		    ;;
+		"no")
+		    exit 0
+		    ;;
+	    esac
+	done
+	;;
+    "config")
+	config
+	exit 0
+	;;
+    "help"|*)
+	usage
+	exit 0
+	;;
+esac
+exit 0
