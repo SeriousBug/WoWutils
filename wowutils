@@ -211,10 +211,18 @@ case $COMMAND in
 	    shift
 	done
 	;;
-    "update"|"install")
+    "install")
 	while (( "$#" )); do
 	    install "$1"
+	    shift
 	done
+	;;
+    "update")
+	for ADDON_NAME in $(list_names) ; do
+	    install "$ADDON_NAME"
+	done
+	echo "Updates done."
+	exit 0
 	;;
     "list")
 	check
