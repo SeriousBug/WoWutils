@@ -150,11 +150,13 @@ download () {
 
 extract () {
     local FILE_NAME=$1
+    echo "Extracting archive $FILE_NAME"
     unzip $UNZIP_ARGS -d "$WOW_ADDON_DIR" "$FILE_NAME"
 }
 
 install () {
     local NAME=$1
+    echo "Installing $NAME"
     local TEMP_FILE="$(download $NAME)"
     extract $TEMP_FILE
 }
