@@ -90,7 +90,6 @@ BACKUP_DIR="."
 # and URL_SUFFIX will be concatenated with addon name between them.
 URL_PREFIX="http://www.curse.com/addons/wow/"
 URL_SUFFIX="/download"
-# The directory where WoW stores addons. Will be appended to WOW_DIR.
 # The pattern used to extract the download url from download page.
 DOWNLOAD_EXTRACT_REGEXP='(?<=data-href=")\S*(?=")'
 # User agent used while downloading the addons. Passed to wget with --user-agent.
