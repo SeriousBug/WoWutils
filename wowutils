@@ -187,6 +187,11 @@ restore () {
     cd "$PWD"
 }
 
+list_names () {
+    # X-Curse-Project-ID's match with Curse addon urls in Curse website.
+    # Eliminate duplicates, because some addons place multiple folders.
+    grep --no-filename -oP "(?<=^## X-Curse-Project-ID: )\S*" "$WOW_ADDON_DIR"/*/*.toc | awk '!a[$0]++'
+}
 
 COMMAND=$1
 shift
@@ -208,6 +213,11 @@ case $COMMAND in
 	while (( "$#" )); do
 	    install "$1"
 	done
+	;;
+    "list")
+	check
+	list_names
+	exit 0
 	;;
     "backup")
 	check
