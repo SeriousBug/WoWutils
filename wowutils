@@ -17,14 +17,17 @@
 
 # Set the defaults
 WOW_DIR=
+BACKUP_DIR="."
 URL_PREFIX="http://www.curse.com/addons/wow/"
 URL_SUFFIX="/download"
 DOWNLOAD_EXTRACT_REGEXP='(?<=data-href=")\S*(?=")'
 USER_AGENT=
 WGET_ARGS="--no-verbose"
 UNZIP_ARGS="-q -u -o"
-TAR_ARGS="-acf"
-TAR_SUFFIX="-wowutil-backup.tar.gz"
+TAR_ARGS="--verify -acf"
+UNTAR_ARGS="--keep-newer-files -xf"
+BACKUP_DATE="+%F_%H.%M.%S"
+BACKUP_SUFFIX="_wowutil_backup.tar.gz"
 SCRIPT_NAME=$(basename $0)
 
 # Load the configuration
@@ -32,9 +35,12 @@ SCRIPT_NAME=$(basename $0)
 [[ -f "$HOME/.config/wowutils" ]] && . "$HOME/.config/wowutils"
 [[ -n "$XDG_CONFIG_HOME" && -f "$XDG_CONFIG_HOME/wowutils" ]] && . "$XDG_CONFIG_HOME/wowutils"
 [[ -n $USER_AGENT ]] && WGET_ARGS+=" --user-agent='$USER_AGENT'"
-WOW_ADDON_DIR="$WOW_DIR/Interface/Addons"
-WOW_CACHE_DIR="$WOW_DIR/Cache"
-WOW_WTF_DIR="$WOW_DIR/WTF"
+WOW_ADDON_SUF="Interface/Addons"
+WOW_CACHE_SUF="Cache"
+WOW_WTF_SUF="WTF"
+WOW_ADDON_DIR="$WOW_DIR/$WOW_ADDON_SUF"
+WOW_CACHE_DIR="$WOW_DIR/$WOW_CACHE_SUF"
+WOW_WTF_DIR="$WOW_DIR/$WOW_WTF_SUF"
 
 usage () {
     cat <<EOF
@@ -57,7 +63,7 @@ Commands:
 
 Configuration:
   $SCRIPT_NAME can be configured via configuration files placed at:
-    * $XDG_CONFIG_HOME/wowutils
+    * \$XDG_CONFIG_HOME/wowutils
     * $HOME/.config/wowutils
     * $HOME/.wowutils
   $SCRIPT_NAME will execute these files in the given order if they exist.
@@ -76,6 +82,10 @@ config () {
     cat <<EOF
 # Path to your WoW install, the directory containing Wow.exe.
 WOW_DIR="/example/dir"
+# The directory where the backups will be saved. Note that relative
+# paths will start from WOW_DIR. Saved to WOW_DIR by default.
+BACKUP_DIR="."
+
 # The page where the download link is located. The URL_PREFIX
 # and URL_SUFFIX will be concatenated with addon name between them.
 URL_PREFIX="http://www.curse.com/addons/wow/"
@@ -91,9 +101,16 @@ WGET_ARGS="--no-verbose"
 # and updates extracted files without prompt.
 UNZIP_ARGS="-q -u -o"
 # The file suffix used for backups.
-TAR_SUFFIX="-wowutil-backup.tar.gz"
-# Arguments for tar. By default, creates an archive, determining the compression from the file suffix."
-TAR_ARGS="-acf"
+# You can change the file extension to change the compression format.
+BACKUP_SUFFIX="_wowutil_backup.tar.gz"
+# The format string used while naming backups. See 'man date' for details.
+BACKUP_DATE="+%F_%H.%M.%S"
+# Arguments for tar, used when creating backups. By default, creates an archive,
+# determining the compression from the file suffix, then verifies the archive."
+TAR_ARGS="--verify -acf"
+# Arguments for tar, used when restoring backups.
+# By default, extracts files, overwriting older ones.
+UNTAR_ARGS="--keep-newer-files -xf"
 EOF
 }
 
@@ -102,6 +119,13 @@ check_wow_dir () {
     -d "$WOW_CACHE_DIR" && \
     -d "$WOW_WTF_DIR" ]] && return 0
     return 1
+}
+
+check_backup_dir () {
+    if ! [[ -d "$BACKUP_DIR" ]]; then
+	echo "BACKUP_DIR doesn't exist or is not a directory. Please check your config." >&2
+	exit 1
+    fi
 }
 
 check () {
@@ -132,8 +156,36 @@ extract () {
 
 install () {
     local NAME=$1
-    local TEMP_FILE=$(download $NAME)
+    local TEMP_FILE="$(download $NAME)"
     extract $TEMP_FILE
+}
+
+backup () {
+    local BACKUP_NAME="$(date $BACKUP_DATE)$BACKUP_SUFFIX"
+    local PWD="$(pwd)"
+    cd "$WOW_DIR"
+    echo "Creating backup archive $BACKUP_DIR/$BACKUP_NAME"
+    tar $TAR_ARGS "$BACKUP_DIR/$BACKUP_NAME" "$WOW_ADDON_SUF" "$WOW_WTF_SUF"
+    cd "$PWD"
+}
+
+check_backup () {
+    local BACKUP_NAME=$1
+    if tar -t -f "$BACKUP_NAME" "$WOW_ADDON_SUF" "$WOW_WTF_SUF" 1>/dev/null ; then
+	echo "Backup seems correct."
+    else
+	echo "Backup is incorrect or corrupted." >&2
+	exit 1
+    fi
+}
+
+restore () {
+    local BACKUP_NAME=$1
+    local PWD="$(pwd)"
+    cd "$WOW_DIR"
+    echo "Restoring backup archive $BACKUP_NAME"
+    tar $UNTAR_ARGS "$BACKUP_NAME"
+    cd "$PWD"
 }
 
 
@@ -157,6 +209,17 @@ case $COMMAND in
 	while (( "$#" )); do
 	    install "$1"
 	done
+	;;
+    "backup")
+	check
+	check_backup_dir
+	backup
+	;;
+    "restore")
+	check
+	check_backup $1
+	restore $1
+	exit 0
 	;;
     "clean")
 	check
