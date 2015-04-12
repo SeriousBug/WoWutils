@@ -35,7 +35,7 @@ SCRIPT_NAME=$(basename $0)
 [[ -f "$HOME/.config/wowutils" ]] && . "$HOME/.config/wowutils"
 [[ -n "$XDG_CONFIG_HOME" && -f "$XDG_CONFIG_HOME/wowutils" ]] && . "$XDG_CONFIG_HOME/wowutils"
 [[ -n $USER_AGENT ]] && WGET_ARGS+=" --user-agent='$USER_AGENT'"
-WOW_ADDON_SUF="Interface/Addons"
+WOW_ADDON_SUF="Interface/AddOns"
 WOW_CACHE_SUF="Cache"
 WOW_WTF_SUF="WTF"
 WOW_ADDON_DIR="$WOW_DIR/$WOW_ADDON_SUF"
