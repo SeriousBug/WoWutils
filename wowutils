@@ -189,13 +189,13 @@ get_version () {
 get_name () {
     # Extract the name from the given .toc file
     local TOC=$1
-    sed -nr "s/^## X-Curse-Project-ID: //gp" "$TOC"
+    sed -nr "s/^## X-Curse-Project-ID: //gp" "$TOC" 2>/dev/null
 }
 
 get_description () {
     # Construct a human readable description for the addon based on given .toc file
     local TOC="$WOW_ADDON_DIR/$1/$1.toc"
-    local TITLE=$(sed -nr "s/^## Title: //gp" "$TOC")
+    local TITLE=$(sed -nr "s/^## X-Curse-Project-Name: //gp" "$TOC")
     local VERSION=$(get_version "$TOC")
     local CATEGORY=$(sed -nr "s/^## X-Category: //gp" "$TOC")
     local NOTES=$(sed -nr "s/^## Notes: //gp" "$TOC")
@@ -210,9 +210,14 @@ EOF
 }
 
 list_names () {
-    local ADDONS
     for TOC in "$WOW_ADDON_DIR"/*/*.toc ; do
 	[[ -n "$(get_name $TOC)" ]] && basename -s ".toc" "$TOC"
+    done
+}
+
+update () {
+    for ADDON in $(grep --no-filename -oP "(?<=^## X-Curse-Project-ID: )\S*" "$WOW_ADDON_DIR"/*/*.toc | awk '!a[$0]++') ; do
+	install "$ADDON"
     done
 }
 
@@ -239,9 +244,7 @@ case $COMMAND in
 	done
 	;;
     "update")
-	for ADDON_NAME in $(list_names) ; do
-	    install "$ADDON_NAME"
-	done
+	update
 	echo "Updates done."
 	exit 0
 	;;
