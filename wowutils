@@ -180,10 +180,40 @@ restore () {
     cd "$PWD"
 }
 
+get_version () {
+    # Extact the version from the given .toc file
+    local TOC=$1
+    sed -nr "s/^## X-Curse-Packaged-Version: //gp" "$TOC"
+}
+
+get_name () {
+    # Extract the name from the given .toc file
+    local TOC=$1
+    sed -nr "s/^## X-Curse-Project-ID: //gp" "$TOC"
+}
+
+get_description () {
+    # Construct a human readable description for the addon based on given .toc file
+    local TOC="$WOW_ADDON_DIR/$1/$1.toc"
+    local TITLE=$(sed -nr "s/^## Title: //gp" "$TOC")
+    local VERSION=$(get_version "$TOC")
+    local CATEGORY=$(sed -nr "s/^## X-Category: //gp" "$TOC")
+    local NOTES=$(sed -nr "s/^## Notes: //gp" "$TOC")
+    local WEBSITE=$(sed -nr "s/^## X-Website: //gp" "$TOC")
+    cat <<EOF
+ --> $TITLE
+ Version: $VERSION
+ Category: $CATEGORY
+ Website: $WEBSITE
+ $NOTES
+EOF
+}
+
 list_names () {
-    # X-Curse-Project-ID's match with Curse addon urls in Curse website.
-    # Eliminate duplicates, because some addons place multiple folders.
-    grep --no-filename -oP "(?<=^## X-Curse-Project-ID: )\S*" "$WOW_ADDON_DIR"/*/*.toc | awk '!a[$0]++'
+    local ADDONS
+    for TOC in "$WOW_ADDON_DIR"/*/*.toc ; do
+	[[ -n "$(get_name $TOC)" ]] && basename -s ".toc" "$TOC"
+    done
 }
 
 COMMAND=$1
@@ -218,6 +248,14 @@ case $COMMAND in
     "list")
 	check
 	list_names
+	exit 0
+	;;
+    "describe")
+	check
+	while (( "$#" )); do
+	    get_description $1
+	    shift
+	done
 	exit 0
 	;;
     "backup")
