@@ -24,7 +24,7 @@ DOWNLOAD_EXTRACT_REGEXP='(?<=data-href=")\S*(?=")'
 USER_AGENT=
 WGET_ARGS="--no-verbose"
 UNZIP_ARGS="-q -u -o"
-TAR_ARGS="--verify -acf"
+TAR_ARGS="-acf"
 UNTAR_ARGS="--keep-newer-files -xf"
 BACKUP_DATE="+%F_%H.%M.%S"
 BACKUP_SUFFIX="_wowutil_backup.tar.gz"
@@ -42,11 +42,11 @@ WOW_ADDON_DIR="$WOW_DIR/$WOW_ADDON_SUF"
 WOW_CACHE_DIR="$WOW_DIR/$WOW_CACHE_SUF"
 WOW_WTF_DIR="$WOW_DIR/$WOW_WTF_SUF"
 
-usage () {
-    cat <<EOF
+help () {
+    [[ -z "$1" ]] && cat <<EOF
 Command line updater for WoW addons, using Curse addons.
 
-Usage: $SCRIPT_NAME <command> [<addons>...]
+Usage: $SCRIPT_NAME <command> [<args>...]
 
 Commands:
   download   Download the addons.
@@ -61,6 +61,9 @@ Commands:
   config     Print an example configuration file.
   help       Print this help.
 
+Run $SCRIPT_NAME help <command> to see details for each command.
+EOF
+    [[ "$1" = "config" ]] && cat <<EOF
 Configuration:
   $SCRIPT_NAME can be configured via configuration files placed at:
     * \$XDG_CONFIG_HOME/wowutils
@@ -82,34 +85,21 @@ config () {
     cat <<EOF
 # Path to your WoW install, the directory containing Wow.exe.
 WOW_DIR="/example/dir"
+
 # The directory where the backups will be saved. Note that relative
 # paths will start from WOW_DIR. Saved to WOW_DIR by default.
 BACKUP_DIR="."
 
-# The page where the download link is located. The URL_PREFIX
-# and URL_SUFFIX will be concatenated with addon name between them.
-URL_PREFIX="http://www.curse.com/addons/wow/"
-URL_SUFFIX="/download"
-# The pattern used to extract the download url from download page.
-DOWNLOAD_EXTRACT_REGEXP='(?<=data-href=")\S*(?=")'
-# User agent used while downloading the addons. Passed to wget with --user-agent.
-USER_AGENT=
-# Arguments for wget. By default, quietens wget output.
-WGET_ARGS="--no-verbose"
-# Arguments for unzip. By default, quietens unzip output,
-# and updates extracted files without prompt.
-UNZIP_ARGS="-q -u -o"
 # The file suffix used for backups.
 # You can change the file extension to change the compression format.
 BACKUP_SUFFIX="_wowutil_backup.tar.gz"
+
 # The format string used while naming backups. See 'man date' for details.
 BACKUP_DATE="+%F_%H.%M.%S"
-# Arguments for tar, used when creating backups. By default, creates an archive,
-# determining the compression from the file suffix, then verifies the archive."
-TAR_ARGS="--verify -acf"
-# Arguments for tar, used when restoring backups.
-# By default, extracts files, overwriting older ones.
-UNTAR_ARGS="--keep-newer-files -xf"
+
+# User agent used while downloading the addons. Passed to wget with --user-agent.
+# Leave it empty to use the default.
+USER_AGENT=
 EOF
 }
 
@@ -167,6 +157,7 @@ backup () {
     cd "$WOW_DIR"
     echo "Creating backup archive $BACKUP_DIR/$BACKUP_NAME"
     tar $TAR_ARGS "$BACKUP_DIR/$BACKUP_NAME" "$WOW_ADDON_SUF" "$WOW_WTF_SUF"
+    check_backup "$BACKUP_DIR/$BACKUP_NAME"
     cd "$PWD"
 }
 
@@ -266,7 +257,7 @@ case $COMMAND in
 	exit 0
 	;;
     "help"|*)
-	usage
+	help $1
 	exit 0
 	;;
 esac
