@@ -43,27 +43,104 @@ WOW_CACHE_DIR="$WOW_DIR/$WOW_CACHE_SUF"
 WOW_WTF_DIR="$WOW_DIR/$WOW_WTF_SUF"
 
 help () {
-    [[ -z "$1" ]] && cat <<EOF
-Command line updater for WoW addons, using Curse addons.
+    case "$1" in
+	"download")
+	    cat <<EOF
+Usage: $SCRIPT_NAME download <addons>...
 
-Usage: $SCRIPT_NAME <command> [<args>...]
-
-Commands:
-  download   Download the addons.
-  extract    Extract the given file into addons folder.
-  install    Download and install addons.
-  update     Update all installed addons.
-  list       List installed addons.
-  backup     Create a backup of all installed addons and addon settings.
-  restore    Restore a backup.
-  clean      Delete the WoW cache.
-  purge      Delete the WoW cache, all installed addons and addon settings.
-  config     Print an example configuration file.
-  help       Print this help.
-
-Run $SCRIPT_NAME help <command> to see details for each command.
+Description:
+  Download the addons from Curse into the current folder.
 EOF
-    [[ "$1" = "config" ]] && cat <<EOF
+	    ;;
+	"extract")
+	    cat <<EOF
+Usage: $SCRIPT_NAME extract <addon_file.zip>...
+
+Description:
+  Extract the addon archives into the World of Warcraft folder.
+EOF
+	    ;;
+	"install")
+	    cat <<EOF
+Usage: $SCRIPT_NAME install <addons>...
+
+Description:
+  Download and extract the addons into World of Warcraft folder.
+EOF
+	    ;;
+	"update")
+	    cat <<EOF
+Usage: $SCRIPT_NAME update
+
+Description:
+  Update all Curse Project addons.
+  Not all addons hosted at Curse are Curse Project addons, 
+  so this command may miss some addons. Also, the command
+  doesn't check if there are new versions, just tries to
+  update all addons.
+EOF
+	    ;;
+	"list")
+	    cat <<EOF
+Usage: $SCRIPT_NAME list
+
+Description:
+  List all Curse Project addons.
+  Not all addons hosted at Curse are Curse Project addons, 
+  so this command may miss some addons. The addons listed
+  here are the ones that will be updated by the update
+  command.
+EOF
+	    ;;
+	"describe")
+	    cat <<EOF
+Usage: $SCRIPT_NAME describe <addon_name>
+
+Description:
+  Print information about an addon, such as the addon description,
+  addon web page etc.
+EOF
+	    ;;
+	"backup")
+	    cat <<EOF
+Usage: $SCRIPT_NAME backup
+
+Description:
+  Creates a backup of all installed addons and addon settings.
+   The backup will be created at '$BACKUP_DIR'.
+  If this path is relative, it will start at '$WOW_DIR'.
+EOF
+	    ;;
+	"restore")
+	    cat <<EOF
+Usage: $SCRIPT_NAME restore <*$BACKUP_SUFFIX>
+
+Description:
+  Restore the backup archive, extracting it into your
+  World of Warcraft directory.
+EOF
+	    ;;
+	"clean")
+	    cat <<EOF
+Usage: $SCRIPT_NAME clean
+
+Description:
+  Cleans your World of Warcraft Cache directory, which contains
+  temporary files used by the game.
+EOF
+	    ;;
+	"purge")
+	    cat <<EOF
+Usage: $SCRIPT_NAME purge
+
+Description:
+  Deletes all installed addons, addon settings and cache.
+  Please note that this is not reversible, all addons and
+  addon settings will be fully deleted.
+EOF
+	    ;;
+	"config")
+	        cat <<EOF
 Configuration:
   $SCRIPT_NAME can be configured via configuration files placed at:
     * \$XDG_CONFIG_HOME/wowutils
@@ -79,6 +156,31 @@ Configuration:
   WOW_DIR must be set to the directory containing your WoW installation.
   This is the folder that contains the Wow.exe.
 EOF
+		;;
+	*)
+	    cat <<EOF
+Command line updater for WoW addons, using Curse addons.
+
+Usage: $SCRIPT_NAME <command> [<args>...]
+
+Commands:
+  download   Download the addons.
+  extract    Extract the given file into addons folder.
+  install    Download and install addons.
+  update     Update all installed addons.
+  list       List installed addons.
+  describe   Print information about an installed addon.
+  backup     Create a backup of all installed addons and addon settings.
+  restore    Restore a backup.
+  clean      Delete the WoW cache.
+  purge      Delete the WoW cache, all installed addons and addon settings.
+  config     Print an example configuration file.
+  help       Print this help.
+
+Run $SCRIPT_NAME help <command> to see details for each command.
+EOF
+	    ;;
+    esac
 }
 
 config () {
