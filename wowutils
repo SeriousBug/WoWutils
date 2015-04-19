@@ -157,6 +157,18 @@ Configuration:
   This is the folder that contains the Wow.exe.
 EOF
 		;;
+	"curse")
+	    cat <<EOF
+Usage: $SCRIPT_NAME curse <curse://addon/uri>
+
+Description:
+  Downloads and installs an addon like install command, however curse
+  command accepts a Curse URI. This command is intended to
+  be used together with a desktop file to handle the URI scheme, so
+  that the user can click on the "Download with Curse Client" button
+  and download the addon with WoWUtils.
+EOF
+	    ;;
 	*)
 	    cat <<EOF
 Command line updater for WoW addons, using Curse addons.
@@ -175,6 +187,7 @@ Commands:
   clean      Delete the WoW cache.
   purge      Delete the WoW cache, all installed addons and addon settings.
   config     Print an example configuration file.
+  curse      Download and install addon, intended to handle curse:// protocol.
   help       Print this help.
 
 Run $SCRIPT_NAME help <command> to see details for each command.
@@ -399,6 +412,11 @@ case $COMMAND in
 	;;
     "config")
 	config
+	exit 0
+	;;
+    "curse")
+	install $(echo "$1" | grep -oP "(?<=wow-addons/)\S*?(?=/)")
+	sleep 2
 	exit 0
 	;;
     "help"|*)

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=WoWUtils
+GenericName=WoWUtils
+Comment=Handle curse:// links to download and install WoW addons.
+Exec=/usr/bin/wowutils curse %u
+Terminal=true
+Type=Application
+MimeType=x-scheme-handler/curse
+Categories=Utility;ConsoleOnly;
