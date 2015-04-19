@@ -4,13 +4,13 @@ WoWutils is a command line tool, designed for handling World of Warcraft addons.
 
 Currently, WoWutils can:
 
-* Download addons from Curse
-* Install downloaded addons
-* Update the addons that are on CurseForge
-* Create and restore backups of your addons and settings
-* Clean the WoW cache
+* Download and install addons from Curse.
+* Handle the Curse URI, the "Download with Curse Client" button.
+* Update the installed addons that are on CurseForge.
+* Create and restore backups of your addons and settings.
+* Clean the WoW cache.
 
-Due to the lack of any API or standard provided by Curse, the tool has some problems. See them below.
+Due to the lack of any API or standard provided by Curse, this tool has some problems. See them below.
 
 # Requirements
 
@@ -23,13 +23,13 @@ Due to the lack of any API or standard provided by Curse, the tool has some prob
 * unzip
 * some parts of `coreutils`
 
-If you are on Linux, you likely have most, if not all already installed. If you are on Windows, you can get these through [Cygwin](https://cygwin.com).
+The requirements may seem excessive, but if you are on Linux, you likely have most, if not all already installed. If you are on Windows, you can get these through [Cygwin](https://cygwin.com).
 
 # Installation and Usage
 
-To install WoWutils, simply place the script somewhere within your `$PATH`.
+To install WoWUtils, simply run `make install`.
 
-You can get information about the usage by running `wowutils help`.
+Afterwards, you can get information about the usage by running `wowutils help`.
 
 To use functionalities like install and clean, you will need to set up some configuration. You can get a sample configuration file by running `wowutils config`. This configuration file can be placed in the following locations:
 
