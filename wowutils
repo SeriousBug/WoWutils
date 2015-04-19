@@ -232,8 +232,9 @@ check () {
 
 download () {
     local NAME=$1
+    local DIRECTORY=$2
     local URL=$URL_PREFIX$NAME$URL_SUFFIX
-    local TEMP_FILE=$(mktemp --tmpdir "$SCRIPT_NAME.$NAME.XXXXXXXXXX")
+    local TEMP_FILE=$(mktemp --tmpdir="$DIRECTORY" "$SCRIPT_NAME.$NAME.XXXXXXXXXX")
     wget $WGET_ARGS -O - "$URL" | \
 	grep -Po "$DOWNLOAD_EXTRACT_REGEXP" | \
 	wget $WGET_ARGS -i - -O "$TEMP_FILE"
@@ -329,7 +330,7 @@ shift
 case $COMMAND in
     "download")
 	while (( "$#" )); do
-	    download "$1"
+	    download "$1" "."
 	    shift
 	done
 	;;	
