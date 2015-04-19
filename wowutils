@@ -250,7 +250,8 @@ install () {
     local NAME=$1
     echo "Installing $NAME"
     local TEMP_FILE="$(download $NAME)"
-    extract $TEMP_FILE
+    extract "$TEMP_FILE"
+    rm "$TEMP_FILE"
 }
 
 backup () {
