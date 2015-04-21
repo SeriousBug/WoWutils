@@ -10,8 +10,6 @@ Currently, WoWutils can:
 * Create and restore backups of your addons and settings.
 * Clean the WoW cache.
 
-Due to the lack of any API or standard provided by Curse, this tool has some problems. See them below.
-
 # Requirements
 
 * bash
